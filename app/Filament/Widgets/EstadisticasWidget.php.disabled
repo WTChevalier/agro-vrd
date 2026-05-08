@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Pedido;
+use App\Models\Restaurante;
+use App\Models\Usuario;
+use App\Models\Repartidor;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
+
+class EstadisticasWidget extends BaseWidget
+{
+    protected static ?int $sort = 1;
+
+    protected function getStats(): array
+    {
+        $pedidosHoy = Pedido::whereDate('created_at', today())->count();
+        $ventasHoy = Pedido::whereDate('created_at', today())
+            ->whereHas('estado', fn ($q) => $q->where('codigo', 'entregado'))
+            ->sum('total');
+
+        $pedidosPendientes = Pedido::whereHas('estado', fn ($q) => $q->where('codigo', 'pendiente'))->count();
+
+        $pedidosSemanaAnterior = Pedido::whereBetween('created_at', [
+            now()->subWeek()->startOfWeek(),
+            now()->subWeek()->endOfWeek()
+        ])->count();
+
+        $pedidosEstaSemana = Pedido::whereBetween('created_at', [
+            now()->startOfWeek(),
+            now()->endOfWeek()
+        ])->count();
+
+        $tendenciaPedidos = $pedidosSemanaAnterior > 0
+            ? round((($pedidosEstaSemana - $pedidosSemanaAnterior) / $pedidosSemanaAnterior) * 100, 1)
+            : 0;
+
+        return [
+            Stat::make('Pedidos Hoy', $pedidosHoy)
+                ->description($pedidosPendientes . ' pendientes')
+                ->descriptionIcon('heroicon-m-clock')
+                ->color($pedidosPendientes > 0 ? 'warning' : 'success')
+                ->chart([7, 3, 4, 5, 6, $pedidosHoy]),
+
+            Stat::make('Ventas Hoy', 'RD$ ' . number_format($ventasHoy, 2))
+                ->description('Total en pedidos completados')
+                ->descriptionIcon('heroicon-m-currency-dollar')
+                ->color('success'),
+
+            Stat::make('Restaurantes Activos', Restaurante::where('activo', true)->count())
+                ->description(Restaurante::where('verificado', true)->count() . ' verificados')
+                ->descriptionIcon('heroicon-m-building-storefront')
+                ->color('primary'),
+
+            Stat::make('Repartidores Disponibles', Repartidor::where('estado', 'aprobado')->where('disponible', true)->count())
+                ->description(Repartidor::where('estado', 'pendiente')->count() . ' pendientes de aprobación')
+                ->descriptionIcon('heroicon-m-truck')
+                ->color('info'),
+        ];
+    }
+}

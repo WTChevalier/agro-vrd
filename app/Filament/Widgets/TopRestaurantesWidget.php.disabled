@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\DB;
+
+class TopRestaurantesWidget extends ChartWidget
+{
+    protected static ?string $heading = 'Top 5 Restaurantes';
+    protected static ?int $sort = 4;
+    protected static ?string $maxHeight = '300px';
+
+    protected function getData(): array
+    {
+        try {
+            $top = DB::table('pedidos')
+                ->select('restaurante_id', DB::raw('COUNT(*) as total'))
+                ->whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")
+                ->groupBy('restaurante_id')
+                ->orderByDesc('total')
+                ->limit(5)
+                ->get();
+
+            $labels = [];
+            $data = [];
+
+            foreach ($top as $item) {
+                $restaurante = DB::table('restaurantes')->find($item->restaurante_id);
+                $labels[] = $restaurante->nombre ?? 'Sin nombre';
+                $data[] = $item->total;
+            }
+
+            if (empty($labels)) {
+                $labels = ['Sin datos'];
+                $data = [1];
+            }
+        } catch (\Exception $e) {
+            $labels = ['Sin datos'];
+            $data = [1];
+        }
+
+        return [
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => [
+                        '#E63946',
+                        '#457B9D',
+                        '#1D3557',
+                        '#A8DADC',
+                        '#F1FAEE',
+                    ],
+                ],
+            ],
+            'labels' => $labels,
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'doughnut';
+    }
+}

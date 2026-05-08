@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Suscripcion;
+use App\Models\Plan;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
+
+class ResumenSuscripcionesWidget extends BaseWidget
+{
+    protected static ?string $pollingInterval = '60s';
+
+    protected static ?int $sort = 1;
+
+    protected function getStats(): array
+    {
+        $activas = Suscripcion::where('estado', 'activa')->count();
+        $pendientes = Suscripcion::where('estado', 'pendiente')->count();
+        $vencidas = Suscripcion::where('estado', 'vencida')->count();
+
+        // Calcular MRR (Monthly Recurring Revenue)
+        $mrr = Suscripcion::where('estado', 'activa')
+            ->join('planes', 'suscripciones.plan_id', '=', 'planes.id')
+            ->sum('planes.precio_mensual');
+
+        // Nuevas suscripciones este mes
+        $nuevasEsteMes = Suscripcion::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        // Cancelaciones este mes
+        $cancelacionesEsteMes = Suscripcion::where('estado', 'cancelada')
+            ->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)
+            ->count();
+
+        return [
+            Stat::make('Suscripciones Activas', $activas)
+                ->description('Restaurantes con plan activo')
+                ->descriptionIcon('heroicon-m-check-circle')
+                ->color('success')
+                ->chart([7, 3, 4, 5, 6, 3, 5, $activas]),
+
+            Stat::make('MRR', 'RD$ ' . number_format($mrr, 0))
+                ->description('Ingresos Recurrentes Mensuales')
+                ->descriptionIcon('heroicon-m-currency-dollar')
+                ->color('success'),
+
+            Stat::make('Pendientes de Pago', $pendientes)
+                ->description('Requieren atención')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color($pendientes > 0 ? 'warning' : 'gray'),
+
+            Stat::make('Vencidas', $vencidas)
+                ->description('Suscripciones expiradas')
+                ->descriptionIcon('heroicon-m-x-circle')
+                ->color($vencidas > 0 ? 'danger' : 'gray'),
+
+            Stat::make('Nuevas (mes)', $nuevasEsteMes)
+                ->description('Nuevas suscripciones')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('info'),
+
+            Stat::make('Cancelaciones (mes)', $cancelacionesEsteMes)
+                ->description('Bajas este mes')
+                ->descriptionIcon('heroicon-m-arrow-trending-down')
+                ->color($cancelacionesEsteMes > 5 ? 'danger' : 'gray'),
+        ];
+    }
+}

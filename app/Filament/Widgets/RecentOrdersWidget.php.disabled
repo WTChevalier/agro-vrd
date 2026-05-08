@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Order;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget as BaseWidget;
+
+class RecentOrdersWidget extends BaseWidget
+{
+    protected static ?string $heading = 'Ultimos 10 Pedidos';
+
+    protected static ?int $sort = 4;
+
+    protected int|string|array $columnSpan = [
+        'md' => 2,
+        'xl' => 2,
+    ];
+
+    protected static ?string $pollingInterval = '15s';
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(
+                Order::query()
+                    ->with(['user', 'restaurant', 'status'])
+                    ->latest()
+                    ->limit(10)
+            )
+            ->columns([
+                Tables\Columns\TextColumn::make('order_number')
+                    ->label('# Pedido')
+                    ->searchable()
+                    ->weight('bold')
+                    ->copyable()
+                    ->copyMessage('Numero copiado')
+                    ->color('primary'),
+
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Cliente')
+                    ->searchable()
+                    ->limit(15)
+                    ->tooltip(fn (Order $record) => $record->user?->name),
+
+                Tables\Columns\TextColumn::make('restaurant.name')
+                    ->label('Restaurante')
+                    ->searchable()
+                    ->limit(15)
+                    ->tooltip(fn (Order $record) => $record->restaurant?->name),
+
+                Tables\Columns\TextColumn::make('status.name')
+                    ->label('Estado')
+                    ->badge()
+                    ->color(fn (Order $record) => match ($record->status?->slug) {
+                        'pending' => 'warning',
+                        'confirmed' => 'info',
+                        'preparing' => 'primary',
+                        'ready' => 'success',
+                        'picked_up', 'on_the_way' => 'info',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
+                        'refunded' => 'gray',
+                        default => 'secondary',
+                    }),
+
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Tipo')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'delivery' => 'Delivery',
+                        'pickup' => 'Recoger',
+                        'dine_in' => 'En Local',
+                        default => $state,
+                    })
+                    ->color(fn (string $state) => match ($state) {
+                        'delivery' => 'primary',
+                        'pickup' => 'warning',
+                        'dine_in' => 'success',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('total')
+                    ->label('Total')
+                    ->money('DOP')
+                    ->weight('bold')
+                    ->alignEnd(),
+
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Pago')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'paid' => 'Pagado',
+                        'pending' => 'Pendiente',
+                        'failed' => 'Fallido',
+                        'refunded' => 'Reembolsado',
+                        default => $state ?? '-',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'paid' => 'success',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        'refunded' => 'gray',
+                        default => 'secondary',
+                    }),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->tooltip(fn (Order $record) => $record->created_at?->format('d/m/Y H:i:s')),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('view')
+                    ->label('Ver')
+                    ->icon('heroicon-m-eye')
+                    ->url(fn (Order $record) => route('filament.admin.resources.orders.edit', $record))
+                    ->openUrlInNewTab(false),
+            ])
+            ->paginated(false)
+            ->striped()
+            ->defaultSort('created_at', 'desc');
+    }
+}

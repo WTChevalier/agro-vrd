@@ -1,0 +1,158 @@
+{
+  "scan_at": "2026-05-05T23:00:09-04:00",
+  "php": {
+    "actual": "8.3.30",
+    "latest": "8.5.5"
+  },
+  "laravel": {
+    "actual": "v13.7.0",
+    "latest": "v13.8.0",
+    "bump": "minor"
+  },
+  "filament": {
+    "actual": "v5.6.1",
+    "latest": "v5.6.2",
+    "bump": "patch"
+  },
+  "livewire": {
+    "actual": "v4.2.4",
+    "latest": "v4.3.0",
+    "bump": "minor"
+  },
+  "tinker": {
+    "actual": "v3.0.2",
+    "latest": "v3.0.2",
+    "bump": "none"
+  },
+  "outdated": [
+    {
+      "name": "filament/filament",
+      "direct-dependency": true,
+      "homepage": "https://github.com/filamentphp/filament",
+      "source": "https://github.com/filamentphp/filament",
+      "version": "v5.6.1",
+      "release-age": "2 weeks old",
+      "release-date": "2026-04-21T15:37:04+00:00",
+      "latest": "v5.6.2",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-05-02T08:32:56+00:00",
+      "description": "A collection of full-stack components for accelerated Laravel app development.",
+      "abandoned": false,
+      "bump": "patch"
+    },
+    {
+      "name": "laravel/framework",
+      "direct-dependency": true,
+      "homepage": "https://laravel.com",
+      "source": "https://github.com/laravel/framework",
+      "version": "v13.7.0",
+      "release-age": "from last week",
+      "release-date": "2026-04-28T17:18:25+00:00",
+      "latest": "v13.8.0",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-05-05T21:01:14+00:00",
+      "description": "The Laravel Framework.",
+      "abandoned": false,
+      "bump": "minor"
+    },
+    {
+      "name": "laravel/sanctum",
+      "direct-dependency": true,
+      "homepage": null,
+      "source": "https://github.com/laravel/sanctum",
+      "version": "v4.3.1",
+      "release-age": "2 months old",
+      "release-date": "2026-02-07T17:19:31+00:00",
+      "latest": "v4.3.2",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-04-30T11:46:25+00:00",
+      "description": "Laravel Sanctum provides a featherweight authentication system for SPAs and simple APIs.",
+      "abandoned": false,
+      "bump": "patch"
+    },
+    {
+      "name": "livewire/livewire",
+      "direct-dependency": true,
+      "homepage": null,
+      "source": "https://github.com/livewire/livewire/tree/v4.2.4",
+      "version": "v4.2.4",
+      "release-age": "1 month old",
+      "release-date": "2026-04-02T20:48:35+00:00",
+      "latest": "v4.3.0",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-05-01T00:46:07+00:00",
+      "description": "A front-end framework for Laravel.",
+      "abandoned": false,
+      "bump": "minor"
+    },
+    {
+      "name": "maatwebsite/excel",
+      "direct-dependency": true,
+      "homepage": null,
+      "source": "https://github.com/SpartnerNL/Laravel-Excel/tree/3.1.68",
+      "version": "3.1.68",
+      "release-age": "1 month old",
+      "release-date": "2026-03-17T20:51:10+00:00",
+      "latest": "3.1.69",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-04-30T20:03:58+00:00",
+      "description": "Supercharged Excel exports and imports in Laravel",
+      "abandoned": false,
+      "bump": "patch"
+    },
+    {
+      "name": "phpunit/phpunit",
+      "direct-dependency": true,
+      "homepage": "https://phpunit.de/",
+      "source": "https://github.com/sebastianbergmann/phpunit/tree/12.5.23",
+      "version": "12.5.23",
+      "release-age": "2 weeks old",
+      "release-date": "2026-04-18T06:12:49+00:00",
+      "latest": "12.5.24",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-05-01T04:21:04+00:00",
+      "description": "The PHP Unit Testing framework.",
+      "abandoned": false,
+      "bump": "patch"
+    },
+    {
+      "name": "spatie/laravel-medialibrary",
+      "direct-dependency": true,
+      "homepage": "https://github.com/spatie/laravel-medialibrary",
+      "source": "https://github.com/spatie/laravel-medialibrary/tree/11.22.0",
+      "version": "11.22.0",
+      "release-age": "from last week",
+      "release-date": "2026-04-28T09:18:56+00:00",
+      "latest": "11.22.1",
+      "latest-status": "semver-safe-update",
+      "latest-release-date": "2026-05-04T11:42:39+00:00",
+      "description": "Associate files with Eloquent models",
+      "abandoned": false,
+      "bump": "patch"
+    },
+    {
+      "name": "stripe/stripe-php",
+      "direct-dependency": true,
+      "homepage": "https://stripe.com/",
+      "source": "https://github.com/stripe/stripe-php/tree/v17.6.0",
+      "version": "v17.6.0",
+      "release-age": "8 months old",
+      "release-date": "2025-08-27T19:32:42+00:00",
+      "latest": "v20.1.0",
+      "latest-status": "update-possible",
+      "latest-release-date": "2026-04-24T00:12:56+00:00",
+      "description": "Stripe PHP Library",
+      "abandoned": false,
+      "bump": "major"
+    }
+  ],
+  "security": [],
+  "resumen": {
+    "outdated_total": 8,
+    "patch": 5,
+    "minor": 2,
+    "major": 1,
+    "unknown": 0,
+    "security_total": 0
+  }
+}

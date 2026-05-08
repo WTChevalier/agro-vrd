@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\DB;
+
+class ActividadRecienteWidget extends Widget
+{
+    protected static string $view = 'filament.widgets.actividad-reciente';
+    protected static ?int $sort = 6;
+    protected int | string | array $columnSpan = 1;
+
+    public function getActividades(): array
+    {
+        $actividades = [];
+
+        // Últimos pedidos
+        try {
+            $pedidos = DB::table('pedidos')
+                ->select('id', 'estado', 'created_at')
+                ->orderByDesc('created_at')
+                ->limit(3)
+                ->get();
+
+            foreach ($pedidos as $p) {
+                $actividades[] = [
+                    'icono' => 'heroicon-o-shopping-bag',
+                    'color' => 'primary',
+                    'texto' => "Nuevo pedido #{$p->id}",
+                    'tiempo' => \Carbon\Carbon::parse($p->created_at)->diffForHumans(),
+                ];
+            }
+        } catch (\Exception $e) {}
+
+        // Últimos usuarios
+        try {
+            $usuarios = DB::table('users')
+                ->select('name', 'created_at')
+                ->orderByDesc('created_at')
+                ->limit(2)
+                ->get();
+
+            foreach ($usuarios as $u) {
+                $actividades[] = [
+                    'icono' => 'heroicon-o-user-plus',
+                    'color' => 'success',
+                    'texto' => "Usuario: {$u->name}",
+                    'tiempo' => \Carbon\Carbon::parse($u->created_at)->diffForHumans(),
+                ];
+            }
+        } catch (\Exception $e) {}
+
+        // Ordenar por tiempo
+        usort($actividades, fn($a, $b) => 0);
+
+        return array_slice($actividades, 0, 5);
+    }
+}

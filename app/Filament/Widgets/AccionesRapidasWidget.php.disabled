@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use Filament\Widgets\Widget;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Illuminate\Support\Facades\Artisan;
+
+class AccionesRapidasWidget extends Widget implements HasActions, HasForms
+{
+    use InteractsWithActions;
+    use InteractsWithForms;
+
+    protected static string $view = 'filament.widgets.acciones-rapidas-widget';
+
+    protected static ?int $sort = 5;
+
+    protected int|string|array $columnSpan = 'full';
+
+    public function recalcularConfianzaAction(): Action
+    {
+        return Action::make('recalcularConfianza')
+            ->label('Recalcular Confianza')
+            ->icon('heroicon-o-calculator')
+            ->color('info')
+            ->requiresConfirmation()
+            ->modalHeading('Recalcular Niveles de Confianza')
+            ->modalDescription('Esto recalculará la puntuación de confianza de todos los restaurantes. ¿Desea continuar?')
+            ->action(function () {
+                Artisan::call('sazonrd:recalcular-confianza');
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Confianza recalculada exitosamente',
+                ]);
+            });
+    }
+
+    public function procesarSuscripcionesAction(): Action
+    {
+        return Action::make('procesarSuscripciones')
+            ->label('Procesar Suscripciones')
+            ->icon('heroicon-o-credit-card')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Procesar Suscripciones')
+            ->modalDescription('Esto procesará suscripciones vencidas, enviará recordatorios y aplicará restricciones. ¿Desea continuar?')
+            ->action(function () {
+                Artisan::call('sazonrd:procesar-suscripciones');
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Suscripciones procesadas exitosamente',
+                ]);
+            });
+    }
+
+    public function limpiarCacheAction(): Action
+    {
+        return Action::make('limpiarCache')
+            ->label('Limpiar Caché')
+            ->icon('heroicon-o-trash')
+            ->color('gray')
+            ->requiresConfirmation()
+            ->action(function () {
+                Artisan::call('cache:clear');
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Caché limpiado exitosamente',
+                ]);
+            });
+    }
+}

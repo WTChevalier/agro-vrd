@@ -1,0 +1,113 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\DeliveryDriver;
+use App\Models\Order;
+use Filament\Widgets\Widget;
+use Illuminate\Support\Collection;
+
+class DeliveryMapWidget extends Widget
+{
+    protected static string $view = 'filament.widgets.delivery-map-widget';
+
+    protected static ?string $heading = 'Mapa de Repartidores';
+
+    protected static ?int $sort = 5;
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected static ?string $pollingInterval = '30s';
+
+    /**
+     * Obtiene los repartidores activos con sus ubicaciones
+     */
+    public function getActiveDrivers(): Collection
+    {
+        return DeliveryDriver::query()
+            ->with(['user'])
+            ->where('is_available', true)
+            ->whereNotNull('current_latitude')
+            ->whereNotNull('current_longitude')
+            ->get()
+            ->map(fn (DeliveryDriver $driver) => [
+                'id' => $driver->id,
+                'name' => $driver->user?->name ?? 'Repartidor #' . $driver->id,
+                'lat' => (float) $driver->current_latitude,
+                'lng' => (float) $driver->current_longitude,
+                'status' => $driver->is_on_delivery ? 'en_entrega' : 'disponible',
+                'vehicle' => $driver->vehicle_type ?? 'moto',
+                'avatar' => $driver->user?->avatar,
+            ]);
+    }
+
+    /**
+     * Obtiene los pedidos activos en delivery
+     */
+    public function getActiveDeliveries(): Collection
+    {
+        return Order::query()
+            ->with(['restaurant', 'user', 'deliveryDriver'])
+            ->whereHas('status', function ($query) {
+                $query->whereIn('slug', ['picked_up', 'on_the_way']);
+            })
+            ->whereNull('delivered_at')
+            ->whereNull('cancelled_at')
+            ->whereNotNull('delivery_latitude')
+            ->whereNotNull('delivery_longitude')
+            ->get()
+            ->map(fn (Order $order) => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'customer_name' => $order->user?->name ?? 'Cliente',
+                'restaurant_name' => $order->restaurant?->name ?? 'Restaurante',
+                'destination' => [
+                    'lat' => (float) $order->delivery_latitude,
+                    'lng' => (float) $order->delivery_longitude,
+                ],
+                'origin' => [
+                    'lat' => (float) ($order->restaurant?->latitude ?? 0),
+                    'lng' => (float) ($order->restaurant?->longitude ?? 0),
+                ],
+                'driver_id' => $order->delivery_driver_id,
+            ]);
+    }
+
+    /**
+     * Obtiene estadisticas para el mapa
+     */
+    public function getMapStats(): array
+    {
+        $totalDrivers = DeliveryDriver::where('is_available', true)->count();
+        $driversOnDelivery = DeliveryDriver::where('is_available', true)
+            ->where('is_on_delivery', true)
+            ->count();
+        $driversAvailable = $totalDrivers - $driversOnDelivery;
+
+        $activeDeliveries = Order::whereHas('status', function ($query) {
+            $query->whereIn('slug', ['picked_up', 'on_the_way']);
+        })
+            ->whereNull('delivered_at')
+            ->whereNull('cancelled_at')
+            ->count();
+
+        return [
+            'total_drivers' => $totalDrivers,
+            'drivers_available' => $driversAvailable,
+            'drivers_on_delivery' => $driversOnDelivery,
+            'active_deliveries' => $activeDeliveries,
+        ];
+    }
+
+    /**
+     * Centro del mapa (Santo Domingo por defecto)
+     */
+    public function getMapCenter(): array
+    {
+        return [
+            'lat' => 18.4861,
+            'lng' => -69.9312,
+            'zoom' => 12,
+        ];
+    }
+}

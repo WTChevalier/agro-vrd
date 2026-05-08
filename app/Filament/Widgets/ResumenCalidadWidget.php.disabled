@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Restaurante;
+use App\Models\Certificacion;
+use App\Models\NivelConfianza;
+use Filament\Widgets\ChartWidget;
+
+class ResumenCalidadWidget extends ChartWidget
+{
+    protected static ?string $heading = 'Distribución de Certificaciones';
+
+    protected static ?int $sort = 3;
+
+    protected static ?string $pollingInterval = '120s';
+
+    protected function getData(): array
+    {
+        $certificaciones = Certificacion::withCount('restaurantes')
+            ->orderBy('orden')
+            ->get();
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Restaurantes por Certificación',
+                    'data' => $certificaciones->pluck('restaurantes_count')->toArray(),
+                    'backgroundColor' => $certificaciones->map(fn ($c) => $c->color)->toArray(),
+                ],
+            ],
+            'labels' => $certificaciones->map(fn ($c) => $c->codigo . ' - ' . $c->nombre)->toArray(),
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'doughnut';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'position' => 'right',
+                ],
+            ],
+        ];
+    }
+}

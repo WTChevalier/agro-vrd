@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Restaurante;
+use App\Models\NivelConfianza;
+use Filament\Widgets\ChartWidget;
+
+class ResumenConfianzaWidget extends ChartWidget
+{
+    protected static ?string $heading = 'Niveles de Confianza';
+
+    protected static ?int $sort = 4;
+
+    protected static ?string $pollingInterval = '120s';
+
+    protected function getData(): array
+    {
+        $niveles = NivelConfianza::withCount('restaurantes')
+            ->orderBy('orden', 'desc')
+            ->get();
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Restaurantes',
+                    'data' => $niveles->pluck('restaurantes_count')->toArray(),
+                    'backgroundColor' => $niveles->map(fn ($n) => $n->color)->toArray(),
+                    'borderWidth' => 0,
+                ],
+            ],
+            'labels' => $niveles->pluck('nombre')->toArray(),
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'indexAxis' => 'y',
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+            ],
+            'scales' => [
+                'x' => [
+                    'beginAtZero' => true,
+                ],
+            ],
+        ];
+    }
+}

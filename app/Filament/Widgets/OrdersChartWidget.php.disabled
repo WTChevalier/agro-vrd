@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Order;
+use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Carbon;
+
+class OrdersChartWidget extends ChartWidget
+{
+    protected static ?string $heading = 'Pedidos - Ultimos 7 Dias';
+
+    protected static ?int $sort = 2;
+
+    protected static ?string $pollingInterval = '60s';
+
+    protected static ?string $maxHeight = '300px';
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected function getData(): array
+    {
+        $days = 7;
+        $labels = [];
+        $ordersData = [];
+        $completedData = [];
+        $cancelledData = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $labels[] = $date->locale('es')->isoFormat('ddd D');
+
+            // Total de pedidos del dia
+            $ordersData[] = Order::whereDate('created_at', $date)->count();
+
+            // Pedidos completados (entregados)
+            $completedData[] = Order::whereDate('created_at', $date)
+                ->whereNotNull('delivered_at')
+                ->count();
+
+            // Pedidos cancelados
+            $cancelledData[] = Order::whereDate('created_at', $date)
+                ->whereNotNull('cancelled_at')
+                ->count();
+        }
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Total Pedidos',
+                    'data' => $ordersData,
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.5)',
+                    'borderColor' => 'rgb(59, 130, 246)',
+                    'borderWidth' => 2,
+                    'fill' => true,
+                    'tension' => 0.3,
+                ],
+                [
+                    'label' => 'Completados',
+                    'data' => $completedData,
+                    'backgroundColor' => 'rgba(34, 197, 94, 0.5)',
+                    'borderColor' => 'rgb(34, 197, 94)',
+                    'borderWidth' => 2,
+                    'fill' => false,
+                    'tension' => 0.3,
+                ],
+                [
+                    'label' => 'Cancelados',
+                    'data' => $cancelledData,
+                    'backgroundColor' => 'rgba(239, 68, 68, 0.5)',
+                    'borderColor' => 'rgb(239, 68, 68)',
+                    'borderWidth' => 2,
+                    'fill' => false,
+                    'tension' => 0.3,
+                ],
+            ],
+            'labels' => $labels,
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => true,
+                    'position' => 'bottom',
+                ],
+                'tooltip' => [
+                    'mode' => 'index',
+                    'intersect' => false,
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'ticks' => [
+                        'stepSize' => 1,
+                    ],
+                ],
+            ],
+            'interaction' => [
+                'mode' => 'nearest',
+                'axis' => 'x',
+                'intersect' => false,
+            ],
+            'maintainAspectRatio' => false,
+        ];
+    }
+}

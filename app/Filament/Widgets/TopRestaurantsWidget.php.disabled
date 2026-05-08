@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Order;
+use App\Models\Restaurant;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+class TopRestaurantsWidget extends BaseWidget
+{
+    protected static ?string $heading = 'Top 5 Restaurantes por Ventas';
+
+    protected static ?int $sort = 3;
+
+    protected int|string|array $columnSpan = [
+        'md' => 1,
+        'xl' => 1,
+    ];
+
+    protected static ?string $pollingInterval = '60s';
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(
+                Restaurant::query()
+                    ->select([
+                        'restaurants.id',
+                        'restaurants.name',
+                        'restaurants.logo',
+                        'restaurants.rating',
+                        'restaurants.total_orders',
+                    ])
+                    ->addSelect([
+                        'total_sales' => Order::selectRaw('COALESCE(SUM(total), 0)')
+                            ->whereColumn('restaurant_id', 'restaurants.id')
+                            ->whereNotNull('delivered_at')
+                            ->whereMonth('orders.created_at', now()->month)
+                            ->whereYear('orders.created_at', now()->year),
+                        'orders_count' => Order::selectRaw('COUNT(*)')
+                            ->whereColumn('restaurant_id', 'restaurants.id')
+                            ->whereNotNull('delivered_at')
+                            ->whereMonth('orders.created_at', now()->month)
+                            ->whereYear('orders.created_at', now()->year),
+                    ])
+                    ->where('is_active', true)
+                    ->orderByDesc('total_sales')
+                    ->limit(5)
+            )
+            ->columns([
+                Tables\Columns\ImageColumn::make('logo')
+                    ->label('')
+                    ->circular()
+                    ->defaultImageUrl(fn () => asset('images/restaurant-default.png'))
+                    ->size(40),
+
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Restaurante')
+                    ->searchable()
+                    ->weight('bold')
+                    ->limit(20),
+
+                Tables\Columns\TextColumn::make('orders_count')
+                    ->label('Pedidos')
+                    ->alignCenter()
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\TextColumn::make('total_sales')
+                    ->label('Ventas')
+                    ->money('DOP')
+                    ->alignEnd()
+                    ->weight('bold')
+                    ->color('success'),
+
+                Tables\Columns\TextColumn::make('rating')
+                    ->label('Rating')
+                    ->alignCenter()
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 1) . ' *' : '-'),
+            ])
+            ->paginated(false)
+            ->striped();
+    }
+}

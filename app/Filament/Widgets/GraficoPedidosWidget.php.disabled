@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Pedido;
+use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Carbon;
+
+class GraficoPedidosWidget extends ChartWidget
+{
+    protected static ?string $heading = 'Pedidos de la Semana';
+
+    protected static ?int $sort = 2;
+
+    protected function getData(): array
+    {
+        $datos = collect();
+
+        for ($i = 6; $i >= 0; $i--) {
+            $fecha = now()->subDays($i);
+            $datos->push([
+                'dia' => $fecha->isoFormat('ddd'),
+                'pedidos' => Pedido::whereDate('created_at', $fecha)->count(),
+                'completados' => Pedido::whereDate('created_at', $fecha)
+                    ->whereHas('estado', fn ($q) => $q->where('codigo', 'entregado'))
+                    ->count(),
+            ]);
+        }
+
+        return [
+            'datasets' => [
+                [
+                    'label' => 'Pedidos Totales',
+                    'data' => $datos->pluck('pedidos')->toArray(),
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.5)',
+                    'borderColor' => 'rgb(59, 130, 246)',
+                ],
+                [
+                    'label' => 'Completados',
+                    'data' => $datos->pluck('completados')->toArray(),
+                    'backgroundColor' => 'rgba(34, 197, 94, 0.5)',
+                    'borderColor' => 'rgb(34, 197, 94)',
+                ],
+            ],
+            'labels' => $datos->pluck('dia')->toArray(),
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'bar';
+    }
+}
