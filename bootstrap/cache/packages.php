@@ -95,6 +95,17 @@
       0 => 'Filament\\Widgets\\WidgetsServiceProvider',
     ),
   ),
+  'gurztac/auth-client' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Gurztac\\AuthClient\\AuthClientServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'GurztacAuth' => 'Gurztac\\AuthClient\\Facades\\GurztacAuth',
+    ),
+  ),
   'kirschbaum-development/eloquent-power-joins' => 
   array (
     'providers' => 

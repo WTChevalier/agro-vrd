@@ -36,3 +36,4 @@ yarn-error.log
 _agrord_*.php
 .DS_Store
 **/.DS_Store
+*.bak*

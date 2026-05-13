@@ -134,3 +134,9 @@ Route::prefix('repartidor')->name('repartidor.')->middleware(['auth', 'role:repa
 });
 Route::post('/logout', function() { auth()->logout(); return redirect('/'); });
 Route::get('/perfil', function() { return view('frontend.perfil'); });
+
+// ─── IdP Cuenta Gurztac ───
+Route::middleware('gurztac.auth')->get('/mi-cuenta', function (\Illuminate\Http\Request $request) {
+    $claims = $request->attributes->get('gurztac_claims', []);
+    return view('mi-cuenta-idp', ['claims' => $claims]);
+})->name('mi-cuenta-idp');
