@@ -97,14 +97,26 @@ class SsoController extends Controller
             return;
         }
 
-        $model = $modelClass::firstOrCreate(
-            [$subField => $userId],
-            [
-                'email' => $claims['email'] ?? null,
-                'name' => $claims['nombre'] ?? $claims['email'] ?? 'Usuario',
-                'password' => bcrypt(bin2hex(random_bytes(16))),
-                'email_verified_at' => now(),
-            ]
-        );
+        $email = $claims['email'] ?? null;
+        $name = $claims['nombre'] ?? $claims['email'] ?? 'Usuario';
+
+        $existing = $modelClass::where($subField, $userId)->first();
+        if ($existing) return;
+
+        if ($email) {
+            $byEmail = $modelClass::where('email', $email)->whereNull($subField)->first();
+            if ($byEmail) {
+                $byEmail->update([$subField => $userId]);
+                return;
+            }
+        }
+
+        $modelClass::create([
+            $subField => $userId,
+            'email' => $email,
+            'name' => $name,
+            'password' => bcrypt(bin2hex(random_bytes(16))),
+            'email_verified_at' => now(),
+        ]);
     }
 }
