@@ -111,12 +111,15 @@ class SsoController extends Controller
             }
         }
 
+        // Mapeo a columnas en español (nombre/apellido/email_verificado_en)
+        $parts = explode(' ', trim($name), 2);
         $modelClass::create([
             $subField => $userId,
             'email' => $email,
-            'name' => $name,
+            'nombre' => $parts[0] ?? $name,
+            'apellido' => $parts[1] ?? '',
             'password' => bcrypt(bin2hex(random_bytes(16))),
-            'email_verified_at' => now(),
+            'email_verificado_en' => now(),
         ]);
     }
 }

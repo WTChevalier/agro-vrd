@@ -84,6 +84,6 @@ return [
     | crear automáticamente un registro local en la tabla users de la app.
     */
     'auto_provision_local_user' => env('GURZTAC_AUTO_PROVISION', true),
-    'local_user_model' => env('GURZTAC_LOCAL_USER_MODEL', \App\Models\User::class),
+    'local_user_model' => env('GURZTAC_LOCAL_USER_MODEL', \App\Models\Usuario::class),
     'sub_claim_field' => 'gurztac_user_id', // columna en users locales que guarda user_ecosistema_id del Hub
 ];

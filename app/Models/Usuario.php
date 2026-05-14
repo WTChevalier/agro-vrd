@@ -30,6 +30,7 @@ class Usuario extends Authenticatable implements FilamentUser
         'saldo_billetera',
         'puntos_lealtad',
         'nivel_lealtad_id',
+        'gurztac_user_id',
     ];
 
     protected $hidden = [
