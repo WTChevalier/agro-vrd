@@ -4,6 +4,7 @@ namespace Gurztac\AuthClient\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Gurztac\AuthClient\Services\HubAuthClient;
 use Gurztac\AuthClient\Services\JwtValidator;
 use Gurztac\AuthClient\Exceptions\InvalidJwtException;
@@ -65,9 +66,12 @@ class SsoController extends Controller
         }
         $request->session()->put('gurztac_claims', $claims);
 
-        // Auto-provision local user (opcional)
+        // Auto-provision local user + Auth::login para activar Fortify session
         if (config('gurztac-auth.auto_provision_local_user')) {
-            $this->autoProvisionLocalUser($claims);
+            $localUser = $this->autoProvisionLocalUser($claims);
+            if ($localUser) {
+                Auth::login($localUser);
+            }
         }
 
         $intended = $request->session()->pull('gurztac_intended', config('gurztac-auth.sso.after_login_redirect'));
@@ -87,33 +91,33 @@ class SsoController extends Controller
         return redirect(config('gurztac-auth.sso.after_logout_redirect'));
     }
 
-    protected function autoProvisionLocalUser(array $claims): void
+    protected function autoProvisionLocalUser(array $claims): ?object
     {
         $modelClass = config('gurztac-auth.local_user_model');
         $subField = config('gurztac-auth.sub_claim_field', 'gurztac_user_id');
         $userId = $claims['user_ecosistema_id'] ?? $claims['sub'] ?? null;
 
         if (!$userId || !class_exists($modelClass)) {
-            return;
+            return null;
         }
 
         $email = $claims['email'] ?? null;
         $name = $claims['nombre'] ?? $claims['email'] ?? 'Usuario';
 
         $existing = $modelClass::where($subField, $userId)->first();
-        if ($existing) return;
+        if ($existing) return $existing;
 
         if ($email) {
             $byEmail = $modelClass::where('email', $email)->whereNull($subField)->first();
             if ($byEmail) {
                 $byEmail->update([$subField => $userId]);
-                return;
+                return $byEmail->fresh();
             }
         }
 
         // Mapeo a columnas en español (nombre/apellido/email_verificado_en)
         $parts = explode(' ', trim($name), 2);
-        $modelClass::create([
+        return $modelClass::create([
             $subField => $userId,
             'email' => $email,
             'nombre' => $parts[0] ?? $name,
